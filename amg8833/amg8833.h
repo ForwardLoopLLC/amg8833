@@ -26,13 +26,12 @@
 ////// Hysteresis level (12 bits: 8 on L, 4 on H)
 #define AMG8833_IHYSL 0x0C
 #define AMG8833_IHYSH 0x0D
-//// Thermistor temperature (12 bitsL 8 on HL, 4 on HH)
+//// Thermistor temperature (12 bits: 8 on HL, 4 on HH)
 #define AMG8833_TTHL 0x0E
 #define AMG8833_TTHH 0x0F
-#define AMG8833_IHYSH 0x0D
-#define AMG8833_IHYSH 0x0D
-#define AMG8833_IHYSH 0x0D
-#define AMG8833_IHYSH 0x0D
-#define AMG8833_IHYSH 0x0D
-#define AMG8833_IHYSH 0x0D
+//// Interrupt table (only define first and last)
+#define AMG8833_INT0 0x10
+#define AMG8833_INT7 0x17
+//// Temperature table (only define first)
+#define AMG8883_T01LH 0x80
 #endif
