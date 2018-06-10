@@ -1,9 +1,17 @@
 #ifndef AMG883_H
 #define AMG8833_H
+#include <math.h>
+#include "i2c/i2c.h"
 #define AMG8833_I2CADDR 0x69
 // Registers
 //// Power control
 #define AMG8833_PCTL 0x00
+enum class AMG8833_PCTL_MODE {
+    NORMAL = 0x00,
+    SLEEP = 0x01,
+    STAND_BY_60 = 0x20,
+    STAND_BY_10 = 0x21
+};
 //// Reset
 #define AMG8833_RST 0x01
 //// Frames per second 
@@ -34,4 +42,44 @@
 #define AMG8833_INT7 0x17
 //// Temperature table (only define first)
 #define AMG8883_T01LH 0x80
+
+class AMG8833 { 
+    public:
+        AMG8833(const uint8_t bus);
+        ~AMG8833();
+        bool error();
+        bool setNormalMode();
+        bool setMovingAverageMode();
+        bool enableInterrupt();
+        bool disableinterrupt();
+        bool setInterruptLevelHigh(float high);
+        bool setInterruptLevelLow(float low);
+        bool setInterruptLevelHysteresis(float hyst);
+    private:
+        I2C i2c;
+        bool err = false;
+};
+
+AMG8833::AMG8833(const uint8_t bus) : i2c(bus, AMG8833_I2CADDR) {
+    if (i2c.error()) {
+        err = true;
+    }
+    // all statuses should be zero on start up
+    if (i2c.read_byte(AMG8833_STAT) != 0x00) {
+        err = true;
+    }
+}
+
+AMG8833::~AMG8833() {}
+
+bool AMG8833::error() {
+    return err;
+}
+
+bool AMG8833::setNormalMode() {
+    if(!i2c.write_byte(AMG8833_PCTL, (uint8_t)AMG8833_PCTL_MODE::NORMAL)) {
+        return false;
+    }
+    return true;
+}
 #endif
