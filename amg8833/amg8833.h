@@ -37,10 +37,10 @@ enum class AMG8833_PCTL_MODE {
 //// Thermistor temperature (12 bits: 8 on HL, 4 on HH)
 #define AMG8833_TTHL 0x0E
 #define AMG8833_TTHH 0x0F
-//// Interrupt table (only define first and last)
+//// Interrupt pixel table (only define first and last)
+describe the layout concisely here
 #define AMG8833_INT0 0x10
-#define AMG8833_INT7 0x17
-//// Temperature table (only define first)
+//// Temperature pixel table (only define first)
 #define AMG8883_T01LH 0x80
 
 class AMG8833 { 
