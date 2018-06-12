@@ -14,10 +14,22 @@ enum class AMG8833_PCTL_MODE {
 };
 //// Reset
 #define AMG8833_RST 0x01
+enum class AMG8833_RST_MODE {
+    FLAG = 0x30,
+    INITIAL = 0x3F
+};
 //// Frames per second 
 #define AMG8833_FPSC 0x02
+enum class AMG8833_FPSC_MODE {
+    _10HZ = 0x00,
+    _1HZ = 0x01
+};
 //// Interrupt control
 #define AMG8833_INTC 0x03
+enum class AMG8833_INTC_MODE {
+    DISABLED = 0x00,
+    ENABLED = 0x01
+};
 //// Status
 #define AMG8833_STAT 0x04
 //// Status clear
@@ -43,34 +55,45 @@ enum class AMG8833_PCTL_MODE {
 //// Temperature table (only define first)
 #define AMG8883_T01LH 0x80
 
+// Conversion constants for temperatures
+#define AMG8833_THERMISTOR_CONVERSION 0.0625
+#define AMG8833_PIXEL_TEMPERATURE_CONVERSION 0.25
+
 class AMG8833 { 
     public:
         AMG8833(const uint8_t bus);
         ~AMG8833();
+        void wait(const int delay);
         bool error();
         bool setNormalMode();
-        bool setMovingAverageMode();
+        bool resetInitial();
+        bool disableInterrupt();
         bool enableInterrupt();
-        bool disableinterrupt();
+        bool setFrameRate10Hz();
+        bool setFrameRate1Hz();
+        bool setMovingAverageMode();
         bool setInterruptLevelHigh(float high);
         bool setInterruptLevelLow(float low);
         bool setInterruptLevelHysteresis(float hyst);
+        double thermistorTemperature();
+        bool gridTemperature(double grid[64]);
     private:
         I2C i2c;
         bool err = false;
+        double signed12BitToDouble(const uint16_t val);
 };
 
 AMG8833::AMG8833(const uint8_t bus) : i2c(bus, AMG8833_I2CADDR) {
     if (i2c.error()) {
         err = true;
     }
-    // all statuses should be zero on start up
-    if (i2c.read_byte(AMG8833_STAT) != 0x00) {
-        err = true;
-    }
 }
 
 AMG8833::~AMG8833() {}
+
+void AMG8833::wait(const int delay) {
+    i2c.wait(delay);
+}
 
 bool AMG8833::error() {
     return err;
@@ -82,4 +105,51 @@ bool AMG8833::setNormalMode() {
     }
     return true;
 }
+
+bool AMG8833::resetInitial() {
+    if(!i2c.write_byte(AMG8833_RST, (uint8_t)AMG8833_RST_MODE::INITIAL)) {
+        return false;
+    } 
+    return true;
+}
+
+bool AMG8833::disableInterrupt() {
+    if(!i2c.write_byte(AMG8833_INTC, (uint8_t)AMG8833_INTC_MODE::DISABLED)) {
+        return false;
+    } 
+    return true;
+}
+
+bool AMG8833::setFrameRate10Hz() {
+    if(!i2c.write_byte(AMG8833_FPSC, (uint8_t)AMG8833_FPSC_MODE::_10HZ)) {
+        return false;
+    } 
+    return true;
+}
+
+bool AMG8833::setFrameRate1Hz() {
+    if(!i2c.write_byte(AMG8833_FPSC, (uint8_t)AMG8833_FPSC_MODE::_1HZ)) {
+        return false;
+    } 
+    return true;
+}
+
+double AMG8833::signed12BitToDouble(const uint16_t val) {
+    uint16_t abs = (val & 0x7FF);
+    return (val & 0x8000) ? 0.0 - (double)abs : (double)abs;
+}
+
+double AMG8833::thermistorTemperature() {
+    return AMG8833_THERMISTOR_CONVERSION*signed12BitToDouble(i2c.read_word(AMG8833_TTHL));
+}
+
+bool AMG8833::gridTemperature(double grid[64]) {
+    for (int i = 0; i < 64; i++) {
+        uint8_t offset = AMG8883_T01LH+2*i;
+        grid[i] = AMG8833_PIXEL_TEMPERATURE_CONVERSION*signed12BitToDouble(
+                (uint16_t)(i2c.read_byte(offset+1) << 8 | i2c.read_byte(offset)));
+    }
+    return true;
+};
+
 #endif
