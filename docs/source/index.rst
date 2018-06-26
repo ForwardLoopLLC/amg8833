@@ -7,6 +7,7 @@ Drivers for AMG8833 Grid-eye Infrared Sensor
 ============================================
 These drivers support the `AMG8833 Infrared Array Sensor Grid-EYE <https://industrial.panasonic.com/cdbs/www-data/pdf/ADI8000/ADI8000C59.pdf>`_.
 
+.. image:: floop-amg8833.png 
 
 This is a grid-eye infrared camera that can measure the temperature of an 8-by-8 grid of pixels (64 total). The sensor can measure temperatures between -0 °C and 80 °C with an accuracy of 2.5 °C.
 
