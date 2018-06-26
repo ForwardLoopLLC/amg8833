@@ -61,21 +61,75 @@ enum class AMG8833_INTC_MODE {
 
 class AMG8833 { 
     public:
+        //! Constructor initializes I2C resources
+        /*!
+            \param bus the I2C bus to which the AMG8833 sensor is connected 
+        */
         AMG8833(const uint8_t bus);
+        //! Destructor cleans up I2C resources
         ~AMG8833();
+        //! Pause main thread execution
+        /*!
+            \param delay time in milliseconds to pause 
+        */
         void wait(const int delay);
+        //! Check if there was an error during object construction
+        /*!
+            \return True, if constructor failed. False, if succeeded.
+        */ 
         bool error();
+        //! Use the sensor in normal mode to measure the temperature of each pixel of the grid (as opposed to moving average mode)
+        /*!
+            \return False, if set failed. True, if set succeeded.
+        */
         bool setNormalMode();
-        bool resetInitial();
-        bool disableInterrupt();
-        bool enableInterrupt();
-        bool setFrameRate10Hz();
-        bool setFrameRate1Hz();
+        //! Use the sensor in moving average mode to measure the moving average of the temperature of each pixel of the grid (as opposed to normal mode)
+        /*!
+            \return False, if set failed. True, if set succeeded.
+        */
         bool setMovingAverageMode();
-        bool setInterruptLevelHigh(float high);
-        bool setInterruptLevelLow(float low);
-        bool setInterruptLevelHysteresis(float hyst);
+        //! Reset all registers to initial factory settings
+        /*!
+            \return False, if reset failed. True, if reset succeeded.
+        */
+        bool resetInitial();
+        //! Disable interrupt mode in order to use the sensor to read temperatures instead of interrupt triggers
+        /*!
+            \return False, if disable failed. True, if disable succeeded.
+        */
+        bool disableInterrupt();
+        //! Enable interrupt mode in order to use the sensor to read interrupt triggers instead of temperatures
+        /*!
+            \return False, if enable failed. True, if enable succeeded.
+        */
+        bool enableInterrupt();
+        //! Set the data sample rate to 10 Hz. This means new data is available roughly every 0.1 seconds.
+        /*!
+            \return False, if set failed. True, if set succeeded.
+        */
+        bool setFrameRate10Hz();
+        //! Set the data sample rate to 1 Hz. This means new data is available roughly every second.
+        /*!
+            \return False, if set failed. True, if set succeeded.
+        */
+        bool setFrameRate1Hz();
+        //! Set the minimum and maximum temperatures that can be measured before triggering an interrupt for a pixel. This setting only takes effect if called with `enableInterrupt()`. The lowest minimum temperature is 0.0 and the highest maximum temperature is 80.0. The difference between the maximum and the minimum must be greater than equal to 2.5, which is the accuracy of each pixel.
+        /*!
+            \param low  minimum temperature in °C
+            \param high maximum temperature in °C
+            \return False, if set failed. True, if set succeeded.
+        */ 
+        bool setInterruptLevelLowHigh(double low, double high);
+        //! Read thermistor (sensor board) temperature
+        /*!
+            \return thermistor temperature in units of °C
+        */ 
         double thermistorTemperature();
+        //! Read grid temperature for all 64 pixels
+        /*!
+            \param grid array to hold the temperature values in units of °C. The `grid` array is made up of concatenated rows of the grid measurements. For example, `grid[0]` to `grid[7]` is the top row of pixels.
+            \return False, if read failed. True, if read succeeded.
+        */ 
         bool gridTemperature(double grid[64]);
     private:
         I2C i2c;
@@ -97,6 +151,35 @@ void AMG8833::wait(const int delay) {
 
 bool AMG8833::error() {
     return err;
+}
+
+bool AMG8833::setInterruptLevelLowHigh(double low, double high) {
+    if( high > 80.0 || high < 2.5) {
+        return false;
+    }
+    if( low > 77.5 || low < 0.0) {
+        return false;
+    }
+    if (high - low < 2.5) {
+        return false;
+    }
+
+    int highByte = high / AMG8833_PIXEL_TEMPERATURE_CONVERSION;
+    if(!i2c.write_byte(AMG8833_INTHL, highByte & 0xFF)) {
+        return false;
+    }
+    if(!i2c.write_byte(AMG8833_INTHH, (highByte & 0x0F) >> 4)) {
+        return false;
+    }
+
+    int lowByte = low / AMG8833_PIXEL_TEMPERATURE_CONVERSION;
+    if(!i2c.write_byte(AMG8833_INTLL, lowByte & 0xFF)) {
+        return false;
+    }
+    if(!i2c.write_byte(AMG8833_INTLH, (lowByte & 0x0F) >> 4)) {
+        return false;
+    }
+    return true;
 }
 
 bool AMG8833::setNormalMode() {

@@ -1,6 +1,8 @@
 #!/bin/bash
+BUS=0 # change this value to match the i2c bus where your amg8833 is connected
 mkdir -p /drivers/i2c/
 mkdir -p /drivers/amg8833/
 cp /floop/include/i2c/linux/*.h /drivers/i2c/
 cp /floop/amg8833/*.h /drivers/amg8833/
-g++ /floop/example/main.cpp -I/drivers -o /floop/amg8833/amg8833 && /floop/amg8833/amg8833
+g++ /floop/example/main.cpp -I/drivers -o /floop/amg8833/amg8833 && \
+    AMG8833_BUS=$BUS /floop/amg8833/amg8833
