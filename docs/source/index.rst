@@ -78,6 +78,12 @@ Install
 
         You can install the C++ header files for use in your own applications.  
 
+        In order to use the drivers with Linux, you need to install some I2C dependencies:
+
+        .. code-block:: bash
+
+            sudo apt-get install -y python-smbus python-dev i2c-tools libi2c-dev 
+
         You need to install the AMG8833 and I2C headers, then include them during compilation of your application. Inside of your application folder, you can install both headers at the same time:
 
         .. code-block:: bash
